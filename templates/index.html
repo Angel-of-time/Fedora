@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FEDORA | Planetary Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-glow: #00e5ff; /* Cyan */
+            --secondary-glow: #2979ff; /* Blue */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --bg-space: radial-gradient(ellipse at bottom, #0c1124 0%, #050813 100%);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-space);
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Stars Background */
+        body::before {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 4px), radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 3px);
+            background-size: 550px 550px, 350px 350px; opacity: 0.4; z-index: -1; pointer-events: none;
+        }
+
+        /* --- DESKTOP CONTAINER --- */
+        .interface-container {
+            width: 420px; height: 850px; max-height: 90vh;
+            background: var(--glass-bg); backdrop-filter: blur(30px) saturate(150%); -webkit-backdrop-filter: blur(30px) saturate(150%);
+            border-radius: 40px; border: 2px solid var(--glass-border);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 0 20px rgba(255, 255, 255, 0.05), 0 0 20px rgba(0, 229, 255, 0.2);
+            padding: 30px; position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: center; transition: all 0.3s ease;
+        }
+
+        /* --- VIEW 1: HOME --- */
+        #home-view { text-align: center; z-index: 2; width: 100%; }
+        .system-title {
+            font-family: 'Rajdhani', sans-serif; font-size: 3.5rem; font-weight: 700; letter-spacing: 4px;
+            background: linear-gradient(to bottom, #ffffff, var(--primary-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 5px; filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.4));
+        }
+        .system-subtitle { font-size: 1rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 60px; }
+        .system-subtitle a { color: var(--primary-glow); text-decoration: none; border-bottom: 1px dotted var(--primary-glow); }
+
+        .data-port-trigger {
+            width: 200px; height: 200px; margin: 0 auto;
+            background: rgba(255, 255, 255, 0.02); border: 2px dashed rgba(0, 229, 255, 0.3); border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative;
+        }
+        .data-port-trigger::before, .data-port-trigger::after {
+            content: ''; position: absolute; border-radius: 50%; border: 1px solid var(--primary-glow); opacity: 0.3; animation: pulseRing 3s linear infinite;
+        }
+        .data-port-trigger::before { width: 110%; height: 110%; }
+        .data-port-trigger::after { width: 130%; height: 130%; animation-delay: 1.5s; }
+        @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .upload-label { font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 2px; }
+
+        /* --- VIEW 2: SCANNER --- */
+        #scanning-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 8, 19, 0.85); backdrop-filter: blur(15px); z-index: 10;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        /* (Kept existing 3D earth CSS here for brevity) */
+        .holo-globe-container { width: 250px; height: 250px; position: relative; perspective: 1000px; transform-style: preserve-3d; }
+        .globe-core { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at center, rgba(0,229,255,0.1), transparent 60%); box-shadow: inset 0 0 30px rgba(0,229,255,0.2), 0 0 50px rgba(0,229,255,0.1); }
+        .holo-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--primary-glow); border-bottom-color: var(--secondary-glow); opacity: 0.6; }
+        .ring-1 { animation: spinX 8s infinite linear; } .ring-2 { animation: spinY 12s infinite linear; width: 90%; height: 90%; margin: 5%; } .ring-3 { animation: spinZ 10s infinite linear; width: 110%; height: 110%; margin: -5%; border-width: 1px; opacity: 0.3; }
+        .scanner-laser { position: absolute; width: 120%; height: 4px; background: var(--primary-glow); box-shadow: 0 0 20px var(--primary-glow), 0 0 4px white; top: 50%; left: -10%; animation: scanVertical 2s ease-in-out infinite alternate; }
+        @keyframes spinX { to { transform: rotateX(360deg); } } @keyframes spinY { to { transform: rotateY(360deg); } } @keyframes spinZ { to { transform: rotateZ(360deg) rotateY(45deg); } } @keyframes scanVertical { from { top: 10%; opacity: 0.2; } to { top: 90%; opacity: 1; } }
+        .status-readout { margin-top: 40px; font-family: 'Rajdhani'; font-size: 1.5rem; color: var(--primary-glow); letter-spacing: 4px; animation: textGlitch 0.8s infinite alternate; }
+        @keyframes textGlitch { 0% { opacity: 0.8; } 100% { opacity: 1; } }
+
+
+        /* --- VIEW 3: RESULTS (NEW LAYOUT) --- */
+        #result-container { display: none; height: 100%; flex-direction: column; width: 100%; }
+        .result-header { font-family: 'Rajdhani'; font-size: 1.8rem; color: var(--primary-glow); margin-bottom: 15px; text-align: center; }
+        
+        /* TOP SPLIT VIEW */
+        .result-split-view {
+            display: flex; gap: 15px; margin-bottom: 20px; flex-shrink: 0;
+        }
+        
+        /* Left: Image Preview */
+        .result-image-box {
+            flex: 1; aspect-ratio: 1/1; /* Square */
+            border-radius: 15px; border: 2px solid var(--primary-glow);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            overflow: hidden; position: relative;
+        }
+        .result-image-box img { width: 100%; height: 100%; object-fit: cover; }
+        /* Scanline effect on image */
+        .result-image-box::after {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:5px;
+            background: var(--primary-glow); box-shadow: 0 0 10px var(--primary-glow);
+            animation: scanDown 3s infinite linear; opacity: 0.5; pointer-events: none;
+        }
+        @keyframes scanDown { 0% {top: -10%;} 100% {top: 110%;} }
+
+        /* Right: Search Sources */
+        .result-sources-box {
+            flex: 1; display: flex; flex-direction: column;
+            background: rgba(255,255,255,0.03); border-radius: 15px; padding: 12px;
+            border: 1px solid rgba(41, 121, 255, 0.3); justify-content: center;
+        }
+        .source-title { font-family: 'Rajdhani'; color: var(--secondary-glow); font-size: 0.8rem; margin-bottom: 8px; letter-spacing: 1px; }
+        .source-logos { display: flex; gap: 8px; flex-wrap: wrap; }
+        .source-logo-item {
+            display: flex; align-items: center; justify-content: center; flex: 1;
+            min-width: 60px; padding: 10px 5px;
+            background: rgba(41, 121, 255, 0.1); border: 1px solid var(--secondary-glow);
+            color: #80d8ff; border-radius: 8px; font-size: 0.65rem; font-weight: bold;
+            text-align: center; box-shadow: inset 0 0 10px rgba(41, 121, 255, 0.2);
+        }
+
+        /* Bottom: Text Report */
+        .result-scroll-area {
+            flex-grow: 1; overflow-y: auto; padding-right: 5px; -webkit-overflow-scrolling: touch;
+        }
+        .holo-chat-bubble {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.15);
+            border-left: 4px solid var(--primary-glow); padding: 15px; border-radius: 20px;
+            line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap;
+        }
+        .next-mission-btn {
+            margin-top: 15px; width: 100%; padding: 12px;
+            background: linear-gradient(45deg, var(--secondary-glow), var(--primary-glow));
+            border: none; border-radius: 30px; color: white;
+            font-family: 'Rajdhani'; font-size: 1.1rem; font-weight: 700; cursor: pointer; flex-shrink: 0;
+        }
+        
+        /* Links area */
+        #sources-area { margin-top: 8px; max-height: 60px; overflow-y: auto; }
+        .source-node {
+            display: block; color: #80d8ff; font-size: 0.75rem; text-decoration: none;
+            margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* --- MOBILE TWEAKS --- */
+        @media screen and (max-width: 480px) {
+            .interface-container { width: 100%; height: 100%; border-radius: 0; border: none; padding: 20px; }
+            .system-title { font-size: 2.5rem; }
+            /* Stack the results on very small screens if needed, though flex row usually works */
+            /* .result-split-view { flex-direction: column; } */
+            .source-logo-item { font-size: 0.6rem; padding: 8px 2px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="interface-container">
+    <div id="home-view">
+        <div class="system-title">FEDORA</div>
+        <div class="system-subtitle">Made by <a href="#">&lt;frdinkoi&gt;</a></div>
+        <div class="data-port-trigger" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon">💠</div>
+            <div class="upload-label">START SCAN</div>
+        </div>
+        <input type="file" id="file-input" hidden accept="image/*" onchange="handleUpload(this)">
+    </div>
+
+    <div id="scanning-overlay">
+        <div class="holo-globe-container">
+            <div class="globe-core"></div><div class="holo-ring ring-1"></div><div class="holo-ring ring-2"></div><div class="holo-ring ring-3"></div><div class="scanner-laser"></div>
+        </div>
+        <div class="status-readout">ACQUIRING GLOBAL TARGET...</div>
+    </div>
+
+    <div id="result-container">
+        <div class="result-header">REPORT SUMMARY</div>
+        
+        <div class="result-split-view">
+            <div class="result-image-box">
+                <img id="result-img-preview" src="" alt="Evidence">
+            </div>
+            <div class="result-sources-box">
+                <div class="source-title">SEARCH VECTORS ENGAGED:</div>
+                <div class="source-logos">
+                     <div class="source-logo-item">🌐 GLOBAL<br>NET</div>
+                     <div class="source-logo-item" style="border-color: var(--primary-glow); color: var(--primary-glow);">👁️ VISUAL<br>INTEL</div>
+                </div>
+                <div id="sources-area"></div>
+            </div>
+        </div>
+
+        <div class="result-scroll-area">
+            <div class="holo-chat-bubble" id="response-text"></div>
+        </div>
+
+        <button class="next-mission-btn" onclick="location.reload()">NEXT TARGET</button>
+    </div>
+</div>
+
+<script>
+    async function handleUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // 1. PREVIEW IMAGE IMMEDIATELY
+            const previewUrl = URL.createObjectURL(file);
+            document.getElementById('result-img-preview').src = previewUrl;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 2. Switch UI to Scanning
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('scanning-overlay').style.display = 'flex';
+            
+            try {
+                const res = await fetch('/analyze', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Analysis Failed");
+                const data = await res.json();
+
+                // 3. Switch UI to Results
+                document.getElementById('scanning-overlay').style.display = 'none';
+                document.getElementById('result-container').style.display = 'flex';
+                
+                // Populate Text
+                document.getElementById('response-text').innerText = data.verdict;
+
+                // Populate Source Links (Small text below logos)
+                const sourceContainer = document.getElementById('sources-area');
+                sourceContainer.innerHTML = ''; 
+                if(data.sources.length > 0) {
+                    data.sources.forEach(source => {
+                        const node = document.createElement('a');
+                        node.className = 'source-node';
+                        node.href = source.url; node.target = '_blank';
+                        node.innerText = `> ${source.title.substring(0, 20)}...`;
+                        sourceContainer.appendChild(node);
+                    });
+                }
+
+            } catch (err) {
+                alert("CONNECTION SEVERED"); location.reload();
+            }
+        }
+    }
+</script>
+</body>
+</html>
